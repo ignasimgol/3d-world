@@ -1,6 +1,12 @@
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import Grass from './grass.js';
+
 let scene, camera, renderer, controls;
 let character;
 let keys = {};
+let grass;
 
 // Initialize scene
 function init() {
@@ -19,7 +25,7 @@ function init() {
     camera.position.set(0, 5, 5);
 
     // Controls
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 1, 0);
     controls.update();
 
@@ -52,9 +58,8 @@ function addLights() {
 }
 
 function loadModels() {
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
 
-    // Load world with character inside
     loader.load('/assets/new-world.glb', (gltf) => {
         const world = gltf.scene;
 
@@ -63,11 +68,26 @@ function loadModels() {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
+
+                // Find the floor object and add grass to it
+                if (child.name === 'floor') {
+                    console.log('Floor found:', child);
+                    
+                    // Get floor dimensions
+                    const boundingBox = new THREE.Box3().setFromObject(child);
+                    const size = boundingBox.getSize(new THREE.Vector3());
+                    
+                    // Create grass with floor dimensions
+                    grass = new Grass(Math.max(size.x, size.z), 90000);
+                    grass.position.copy(child.position);
+                    grass.rotation.copy(child.rotation);
+                    scene.add(grass);
+                }
             }
         });
 
-        // Find the character by name
-        character = world.getObjectByName('character'); // Reemplaza 'character' con el nombre de tu objeto
+        // Find the character
+        character = world.getObjectByName('character');
         if (character) {
             console.log('Character found:', character);
         } else {
@@ -117,6 +137,13 @@ function animate() {
     requestAnimationFrame(animate);
     handleMovement();
     controls.update();
+
+    if (grass) {
+        grass.update(performance.now());
+    }
+    
+    renderer.render(scene, camera);
+
     renderer.render(scene, camera);
 }
 
