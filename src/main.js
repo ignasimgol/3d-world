@@ -19,6 +19,16 @@ const modal = document.querySelector(".modal");
 const modalBgOverlay = document.querySelector(".modal-bg-overlay");
 const modalExitButton = document.querySelector(".modal-exit-button");
 
+const introScreen = document.getElementById('intro-screen');
+const enterButton = document.getElementById('enter-button');
+const gameContainer = document.getElementById('game-container');
+
+enterButton.addEventListener('click', () => {
+    introScreen.style.display = 'none';
+    gameContainer.classList.remove('hidden');
+    init(); // Start the game
+});
+
 const sizes = {
     width: window.innerWidth,
     height: window.innerHeight
