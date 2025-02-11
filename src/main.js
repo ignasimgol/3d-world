@@ -7,6 +7,10 @@ let scene, camera, renderer, controls;
 let character;
 let keys = {};
 // let grass;
+let light, sun;
+const themeToggle = document.getElementById('theme-toggle');
+const sunIcon = document.getElementById('sun-icon');
+const moonIcon = document.getElementById('moon-icon');
 
 const sizes = {
     width: window.innerWidth,
@@ -76,11 +80,11 @@ function init() {
 
 function addLights() {
     // Ambient light
-    const light = new THREE.AmbientLight(0x505050, 2.7);
+    light = new THREE.AmbientLight(0x505050, 2.7);
     scene.add(light);
 
     // Sun con intensidad ajustada
-    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+    sun = new THREE.DirectionalLight(0xffffff, 1.5);
     sun.castShadow = true;
     sun.position.set(280, 200, -80);
     sun.target.position.set(100, 0, -10);
@@ -94,11 +98,64 @@ function addLights() {
     scene.add(sun.target);
     scene.add(sun);
 
-    // Helper para visualizar la dirección de la luz
     const sunHelper = new THREE.DirectionalLightHelper(sun, 10);
     scene.add(sunHelper);
-
 }
+
+// Añade la función toggleTheme
+function toggleTheme() {
+    const isDarkTheme = document.body.classList.contains('dark-theme');
+    document.body.classList.toggle('dark-theme');
+    document.body.classList.toggle('light-theme');
+
+    if (sunIcon.style.display === 'none') {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+    } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+    }
+
+    gsap.to(light.color, {
+        r: isDarkTheme ? 1.0 : 0.25,
+        g: isDarkTheme ? 1.0 : 0.31,
+        b: isDarkTheme ? 1.0 : 0.78,
+        duration: 1,
+        ease: "power2.inOut",
+    });
+
+    gsap.to(light, {
+        intensity: isDarkTheme ? 0.8 : 0.9,
+        duration: 1,
+        ease: "power2.inOut",
+    });
+
+    gsap.to(sun, {
+        intensity: isDarkTheme ? 1 : 0.8,
+        duration: 1,
+        ease: "power2.inOut",
+    });
+
+    gsap.to(sun.color, {
+        r: isDarkTheme ? 1.0 : 0.25,
+        g: isDarkTheme ? 1.0 : 0.41,
+        b: isDarkTheme ? 1.0 : 0.88,
+        duration: 1,
+        ease: "power2.inOut",
+    });
+
+    // También cambiamos el color de fondo de la escena
+    gsap.to(scene.background, {
+        r: isDarkTheme ? 0.63 : 0.25,
+        g: isDarkTheme ? 0.63 : 0.31,
+        b: isDarkTheme ? 0.63 : 0.78,
+        duration: 1,
+        ease: "power2.inOut",
+    });
+}
+
+// Añade el event listener para el botón de tema
+themeToggle.addEventListener('click', toggleTheme);
 
 function loadModels() {
     const loader = new GLTFLoader();
