@@ -35,7 +35,7 @@ function init() {
     renderer.shadowMap.enabled = true;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.7;
-    document.body.appendChild(renderer.domElement);
+    document.getElementById('game-container').appendChild(renderer.domElement);
 
     // Camera
     const aspect = sizes.width / sizes.height;
