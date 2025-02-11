@@ -206,7 +206,7 @@ function loadModels() {
 function handleMovement() {
     if (!character) return;
 
-    const speed = 0.8;
+    const speed = 0.6;
 
     if (keys[' '] && !isJumping) {
         isJumping = true;
