@@ -1,12 +1,19 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import Grass from './grass.js';
+// import Grass from './grass.js';
 
 let scene, camera, renderer, controls;
 let character;
 let keys = {};
-let grass;
+// let grass;
+
+const sizes = {
+    width: window.innerWidth,
+    height: window.innerHeight
+};
+
+const cameraOffset = new THREE.Vector3(52, 156, 268);
 
 // Initialize scene
 function init() {
@@ -15,14 +22,38 @@ function init() {
     scene.background = new THREE.Color(0xa0a0a0);
 
     // Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer = new THREE.WebGLRenderer({
+        antialias: true,
+    });
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.shadowMap.enabled = true;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.7;
     document.body.appendChild(renderer.domElement);
 
     // Camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 5);
+    const aspect = sizes.width / sizes.height;
+    camera = new THREE.OrthographicCamera(
+        -aspect * 50,
+        aspect * 50,
+        50,
+        -50,
+        1,
+        1000
+    );
+    camera.position.set(52, 156, 268); // Actualiza la posición inicial
+    camera.zoom = 0.8; // Reducido para alejar más la vista
+    camera.updateProjectionMatrix();
+
+    // Helper
+    const cameraHelper = new THREE.CameraHelper(camera);
+    scene.add(cameraHelper);
+
+    // Controls
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.update();
 
     // Controls
     controls = new OrbitControls(camera, renderer.domElement);
@@ -45,16 +76,28 @@ function init() {
 
 function addLights() {
     // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
+    const light = new THREE.AmbientLight(0x505050, 2.7);
+    scene.add(light);
 
-    // Directional light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 5, 5);
-    directionalLight.castShadow = true;
-    directionalLight.shadow.mapSize.width = 1024;
-    directionalLight.shadow.mapSize.height = 1024;
-    scene.add(directionalLight);
+    // Sun con intensidad ajustada
+    const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+    sun.castShadow = true;
+    sun.position.set(280, 200, -80);
+    sun.target.position.set(100, 0, -10);
+    sun.shadow.mapSize.width = 4096;
+    sun.shadow.mapSize.height = 4096;
+    sun.shadow.camera.left = -150;
+    sun.shadow.camera.right = 300;
+    sun.shadow.camera.top = 150;
+    sun.shadow.camera.bottom = -100;
+    sun.shadow.normalBias = 0.2;
+    scene.add(sun.target);
+    scene.add(sun);
+
+    // Helper para visualizar la dirección de la luz
+    const sunHelper = new THREE.DirectionalLightHelper(sun, 10);
+    scene.add(sunHelper);
+
 }
 
 function loadModels() {
@@ -77,11 +120,11 @@ function loadModels() {
                     const boundingBox = new THREE.Box3().setFromObject(child);
                     const size = boundingBox.getSize(new THREE.Vector3());
                     
-                    // Create grass with floor dimensions
-                    grass = new Grass(Math.max(size.x, size.z), 90000);
-                    grass.position.copy(child.position);
-                    grass.rotation.copy(child.rotation);
-                    scene.add(grass);
+                    // // Create grass with floor dimensions
+                    // grass = new Grass(Math.max(size.x, size.z), 90000);
+                    // grass.position.copy(child.position);
+                    // grass.rotation.copy(child.rotation);
+                    // scene.add(grass);
                 }
             }
         });
@@ -106,31 +149,53 @@ function handleMovement() {
 
     // Forward/Backward (W/S or ArrowUp/ArrowDown)
     if (keys['w'] || keys['ArrowUp']) {
-        character.position.z -= speed;
-        character.rotation.y = Math.PI / 2;
-        
-    }
-    if (keys['s'] || keys['ArrowDown']) {
         character.position.z += speed;
         character.rotation.y = -Math.PI / 2;
+        updateCameraPosition();
+    }
+    if (keys['s'] || keys['ArrowDown']) {
+        character.position.z -= speed;
+        character.rotation.y = Math.PI / 2;
+        updateCameraPosition();
     }
 
     // Left/Right (A/D or ArrowLeft/ArrowRight)
     if (keys['a'] || keys['ArrowLeft']) {
-        character.position.x -= speed;
-        character.rotation.y = Math.PI;
-    }
-    if (keys['d'] || keys['ArrowRight']) {
         character.position.x += speed;
         character.rotation.y = 0;
-        
+        updateCameraPosition();
+    }
+    if (keys['d'] || keys['ArrowRight']) {
+        character.position.x -= speed;
+        character.rotation.y = Math.PI;
+        updateCameraPosition();
     }
 }
 
+// Añade esta nueva función después de handleMovement
+function updateCameraPosition() {
+    camera.position.x = character.position.x + cameraOffset.x;
+    camera.position.y = character.position.y + cameraOffset.y;
+    camera.position.z = character.position.z + cameraOffset.z;
+    
+    // Hacer que la cámara mire al personaje
+    controls.target.copy(character.position);
+    controls.update();
+}
+
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    sizes.width = window.innerWidth;
+    sizes.height = window.innerHeight;
+    const aspect = sizes.width / sizes.height;
+    
+    camera.left = -aspect * 50;
+    camera.right = aspect * 50;
+    camera.top = 50;
+    camera.bottom = -50;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    renderer.setSize(sizes.width, sizes.height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 }
 
 function animate() {
@@ -138,9 +203,9 @@ function animate() {
     handleMovement();
     controls.update();
 
-    if (grass) {
-        grass.update(performance.now());
-    }
+    // if (grass) {
+    //     grass.update(performance.now());
+    // }
     
     renderer.render(scene, camera);
 
