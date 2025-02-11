@@ -47,6 +47,7 @@ body.dark-theme {
   justify-content: center;
   align-items: center;
   border: 3px solid white;
+  border-radius: 50%;
   padding: 8px;
   cursor: pointer;
   z-index: 500;  /* Higher z-index to ensure visibility */
