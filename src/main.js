@@ -10,10 +10,14 @@ let isJumping = false;
 const JUMP_FORCE = 1.0;
 const GRAVITY = 0.05;
 const INITIAL_Y = 15.0;
+let courtObject = null;
 
 const themeToggle = document.getElementById('theme-toggle');
 const sunIcon = document.getElementById('sun-icon');
 const moonIcon = document.getElementById('moon-icon');
+const modal = document.querySelector(".modal");
+const modalBgOverlay = document.querySelector(".modal-bg-overlay");
+const modalExitButton = document.querySelector(".modal-exit-button");
 
 const sizes = {
     width: window.innerWidth,
@@ -21,6 +25,11 @@ const sizes = {
 };
 
 const cameraOffset = new THREE.Vector3(52, 156, 268);
+
+// Raycaster setup
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let intersectObject = "";
 
 function init() {
     scene = new THREE.Scene();
@@ -63,6 +72,9 @@ function init() {
     window.addEventListener('resize', onWindowResize, false);
     window.addEventListener('keydown', (e) => keys[e.key] = true);
     window.addEventListener('keyup', (e) => keys[e.key] = false);
+    window.addEventListener('click', onClick);
+    window.addEventListener('mousemove', onMouseMove);
+    modalExitButton.addEventListener('click', hideModal);
 
     animate();
 }
@@ -151,20 +163,30 @@ function loadModels() {
             if (child.isMesh) {
                 child.castShadow = true;
                 child.receiveShadow = true;
-
-                if (child.name === 'floor') {
-                    console.log('Floor found:', child);
-                    const boundingBox = new THREE.Box3().setFromObject(child);
-                    const size = boundingBox.getSize(new THREE.Vector3());
+                
+                // Modificar esta parte para buscar en la colección
+                if (child.parent && child.parent.name.toLowerCase().includes('court')) {
+                    console.log('Court found:', child.parent);
+                    courtObject = child.parent;  // Guardamos la colección completa
                 }
             }
+        });
+
+        console.log('Final courtObject:', courtObject);
+        setTimeout(() => {
+            console.log("Testing courtObject after load:", courtObject);
+        }, 3000);
+
+        console.log("Objects in scene:");
+            world.traverse(child => {
+                console.log(child.name);
         });
 
         character = world.getObjectByName('character');
         if (character) {
             console.log('Character found:', character);
             character.velocity = 0;
-            character.position.y = INITIAL_Y; // Set initial position
+            character.position.y = INITIAL_Y;
         }
 
         scene.add(world);
@@ -174,14 +196,13 @@ function loadModels() {
 function handleMovement() {
     if (!character) return;
 
-    const speed = 0.3;
+    const speed = 0.8;
 
     if (keys[' '] && !isJumping) {
         isJumping = true;
         character.velocity = JUMP_FORCE;
     }
 
-    // Apply gravity and jumping physics
     if (isJumping) {
         character.position.y += character.velocity;
         character.velocity -= GRAVITY;
@@ -238,6 +259,53 @@ function onWindowResize() {
 
     renderer.setSize(sizes.width, sizes.height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+}
+
+// Modal functions
+function showModal() {
+    modal.classList.remove("hidden");
+    modalBgOverlay.classList.remove("hidden");
+}
+
+function hideModal() {
+    modal.classList.add("hidden");
+    modalBgOverlay.classList.add("hidden");
+}
+
+// Raycaster functions
+
+function onMouseMove(event) {
+    if (!courtObject) return;
+
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    raycaster.setFromCamera(pointer, camera);
+    // Usar intersectObjects con el array de children del courtObject
+    const intersects = raycaster.intersectObjects(courtObject.children, true);
+
+    if (intersects.length > 0) {
+        intersectObject = "court";
+        document.body.style.cursor = "pointer";
+    } else {
+        intersectObject = "";
+        document.body.style.cursor = "default";
+    }
+}
+
+function onClick(event) {
+    if (!courtObject) return;
+
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    
+    raycaster.setFromCamera(pointer, camera);
+    // Usar intersectObjects con el array de children del courtObject
+    const intersects = raycaster.intersectObjects(courtObject.children, true);
+
+    if (intersects.length > 0) {
+        showModal();
+    }
 }
 
 function animate() {
