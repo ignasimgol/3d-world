@@ -1,16 +1,20 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import gsap from 'gsap';
 
 let scene, camera, renderer, controls;
 let character;
 let keys = {};
 let light, sun;
 let isJumping = false;
+
 const JUMP_FORCE = 1.0;
 const GRAVITY = 0.05;
 const INITIAL_Y = 15.0;
+
 let courtObject = null;
+let pokeballs = [];
 
 const themeToggle = document.getElementById('theme-toggle');
 const sunIcon = document.getElementById('sun-icon');
@@ -18,6 +22,9 @@ const moonIcon = document.getElementById('moon-icon');
 const modal = document.querySelector(".modal");
 const modalBgOverlay = document.querySelector(".modal-bg-overlay");
 const modalExitButton = document.querySelector(".modal-exit-button");
+const pokeballModal = document.querySelector(".pokeball-modal");
+const pokeballModalOverlay = document.querySelector(".pokeball-modal-overlay");
+const pokeballModalExitButton = document.querySelector(".pokeball-modal-exit-button");
 
 const introScreen = document.getElementById('intro-screen');
 const enterButton = document.getElementById('enter-button');
@@ -34,7 +41,7 @@ const sizes = {
     height: window.innerHeight
 };
 
-const cameraOffset = new THREE.Vector3(52, 100, 268);
+const cameraOffset = new THREE.Vector3(52, 156, 268);
 
 // Raycaster setup
 const raycaster = new THREE.Raycaster();
@@ -55,6 +62,9 @@ function init() {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.7;
     document.getElementById('game-container').appendChild(renderer.domElement);
+
+    modalExitButton.addEventListener('click', hideModal);
+    pokeballModalExitButton.addEventListener('click', hidePokeballModal);
 
     const aspect = sizes.width / sizes.height;
     camera = new THREE.OrthographicCamera(
@@ -174,10 +184,18 @@ function loadModels() {
                 child.castShadow = true;
                 child.receiveShadow = true;
                 
-                // Modificar esta parte para buscar en la colección
+                // Añadir log para debug
+                console.log("Mesh name:", child.name, "Parent name:", child.parent?.name);
+                
                 if (child.parent && child.parent.name.toLowerCase().includes('court')) {
                     console.log('Court found:', child.parent);
-                    courtObject = child.parent;  // Guardamos la colección completa
+                    courtObject = child.parent;
+                }
+
+                // Modificar la detección de pokeballs
+                if (child.parent && child.parent.name.toLowerCase().includes('pokeball')) {
+                    console.log('Pokeball found:', child.parent);
+                    pokeballs.push(child.parent);
                 }
             }
         });
@@ -281,21 +299,36 @@ function hideModal() {
     modal.classList.add("hidden");
     modalBgOverlay.classList.add("hidden");
 }
+function showPokeballModal() {
+    pokeballModal.classList.remove("hidden");
+    pokeballModalOverlay.classList.remove("hidden");
+}
+
+function hidePokeballModal() {
+    pokeballModal.classList.add("hidden");
+    pokeballModalOverlay.classList.add("hidden");
+}
+
 
 // Raycaster functions
 
 function onMouseMove(event) {
-    if (!courtObject) return;
+    if (!courtObject && pokeballs.length === 0) return;
 
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
     
     raycaster.setFromCamera(pointer, camera);
-    // Usar intersectObjects con el array de children del courtObject
-    const intersects = raycaster.intersectObjects(courtObject.children, true);
+    
+    // Comprobar intersección con court y pokeballs
+    const courtIntersects = courtObject ? raycaster.intersectObjects(courtObject.children, true) : [];
+    const pokeballIntersects = raycaster.intersectObjects(pokeballs.flatMap(pb => pb.children), true);
 
-    if (intersects.length > 0) {
+    if (courtIntersects.length > 0) {
         intersectObject = "court";
+        document.body.style.cursor = "pointer";
+    } else if (pokeballIntersects.length > 0) {
+        intersectObject = pokeballIntersects[0].object.parent.name;
         document.body.style.cursor = "pointer";
     } else {
         intersectObject = "";
@@ -304,19 +337,28 @@ function onMouseMove(event) {
 }
 
 function onClick(event) {
-    if (!courtObject) return;
+    if (!courtObject && pokeballs.length === 0) return;
 
     pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
     pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
     
     raycaster.setFromCamera(pointer, camera);
-    // Usar intersectObjects con el array de children del courtObject
-    const intersects = raycaster.intersectObjects(courtObject.children, true);
+    
+    const pokeballIntersects = raycaster.intersectObjects(pokeballs.flatMap(pb => pb.children), true);
+    if (pokeballIntersects.length > 0) {
+        const pokeball = pokeballIntersects[0].object.parent;
+        console.log("Pokeball clicked:", pokeball.name);
+        showPokeballModal();
+        return;
+    }
 
-    if (intersects.length > 0) {
+    const courtIntersects = courtObject ? raycaster.intersectObjects(courtObject.children, true) : [];
+    if (courtIntersects.length > 0) {
         showModal();
     }
 }
+
+
 
 function animate() {
     requestAnimationFrame(animate);

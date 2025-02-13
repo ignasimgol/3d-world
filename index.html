@@ -12,9 +12,10 @@
     <div id="intro-screen">
         <div class="intro-content">
             <h1>Welcome to My 3D World</h1>
-            <p>Use WASD or arrow keys to move around.<br>
-               Space to jump.<br>
-               Click on objects to interact with them.</p>
+            <p>🕹️ Use WASD or arrow keys to move around.<br>
+               🔼 Space to jump.<br>
+               🖱️ Click on objects to interact with them.<br>
+               🔎 Find all the Pokeballs and click them to complete the Pokedex</p>
             <button id="enter-button">Enter World</button>
         </div>
     </div>
@@ -25,6 +26,7 @@
             <span id="sun-icon" class="theme-icon">💤</span>
             <span id="moon-icon" class="theme-icon" style="display: none;">💡</span>
         </button>
+        <div id="pokeball-counter">0/5 🎾</div>
 
         <div class="modal-bg-overlay hidden"></div>
         <div class="modal hidden">
@@ -37,6 +39,22 @@
                     <div class="modal-content-wrapper">
                         <p class="modal-project-description">
                             Welcome to the basketball court! This is where all the action happens.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-bg-overlay pokeball-modal-overlay hidden"></div>
+        <div class="modal pokeball-modal hidden">
+            <div class="modal-wrapper">
+                <div class="modal-header">
+                    <h1 class="modal-title">Pokeball Found!</h1>
+                    <button class="pokeball-modal-exit-button">X</button>
+                </div>
+                <div class="modal-content">
+                    <div class="modal-content-wrapper">
+                        <p class="modal-project-description">
+                            Congratulations! You found a Pokeball!
                         </p>
                     </div>
                 </div>
