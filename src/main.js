@@ -16,7 +16,6 @@ const INITIAL_Y = 15.0;
 let courtObject = null;
 let pokeballs = [];
 
-
 const themeToggle = document.getElementById('theme-toggle');
 const sunIcon = document.getElementById('sun-icon');
 const moonIcon = document.getElementById('moon-icon');
@@ -73,7 +72,6 @@ function init() {
 
     modalExitButton.addEventListener('click', hideModal);
     pokeballModalExitButton.addEventListener('click', hidePokeballModal);
-
     completionModalExitButton.addEventListener('click', hideCompletionModal);
 
     const aspect = sizes.width / sizes.height;
@@ -85,14 +83,13 @@ function init() {
         1,
         1000
     );
-    camera.position.set(52, 156, 268);
-    camera.zoom = 0.8;
-    camera.updateProjectionMatrix();
-
-    const cameraHelper = new THREE.CameraHelper(camera);
-    scene.add(cameraHelper);
-
+    
+    // Inicializar controles antes de cargar el modelo
     controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableRotate = false;
+    controls.enableZoom = true;  // Enable zoom
+    controls.minZoom = 0.5;      // Limit how far you can zoom out
+    controls.maxZoom = 1.2;      // Limit how far you can zoom in
     controls.target.set(0, 1, 0);
     controls.update();
 
@@ -104,7 +101,6 @@ function init() {
     window.addEventListener('keyup', (e) => keys[e.key] = false);
     window.addEventListener('click', onClick);
     window.addEventListener('mousemove', onMouseMove);
-    modalExitButton.addEventListener('click', hideModal);
 
     animate();
 }
@@ -126,9 +122,6 @@ function addLights() {
     sun.shadow.normalBias = 0.2;
     scene.add(sun.target);
     scene.add(sun);
-
-    const sunHelper = new THREE.DirectionalLightHelper(sun, 10);
-    scene.add(sunHelper);
 }
 
 function toggleTheme() {
@@ -225,6 +218,19 @@ function loadModels() {
             console.log('Character found:', character);
             character.velocity = 0;
             character.position.y = INITIAL_Y;
+            
+            // Configurar la cámara inicial después de cargar el personaje
+            camera.position.set(
+                character.position.x + cameraOffset.x,
+                character.position.y + cameraOffset.y,
+                character.position.z + cameraOffset.z
+            );
+            camera.zoom = 0.8;
+            camera.updateProjectionMatrix();
+            
+            // Actualizar los controles para que apunten al personaje
+            controls.target.copy(character.position);
+            controls.update();
         }
 
         scene.add(world);
@@ -398,8 +404,6 @@ function onClick(event) {
         showModal();
     }
 }
-
-
 
 function animate() {
     requestAnimationFrame(animate);

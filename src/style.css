@@ -110,6 +110,12 @@ canvas {
   color: #000;
 }
 
+.modal-content-wrapper img {
+  justify-content: center;
+  align-items: center;
+  justify-items: center;
+}
+
 .hidden {
   display: none !important;  /* Add !important to ensure it works */
 }
