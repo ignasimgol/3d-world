@@ -16,6 +16,7 @@ const INITIAL_Y = 15.0;
 let courtObject = null;
 let pokeballs = [];
 
+
 const themeToggle = document.getElementById('theme-toggle');
 const sunIcon = document.getElementById('sun-icon');
 const moonIcon = document.getElementById('moon-icon');
@@ -26,9 +27,16 @@ const pokeballModal = document.querySelector(".pokeball-modal");
 const pokeballModalOverlay = document.querySelector(".pokeball-modal-overlay");
 const pokeballModalExitButton = document.querySelector(".pokeball-modal-exit-button");
 
+const pokeballCounter = document.getElementById('pokeball-counter');
+const completionModal = document.querySelector(".completion-modal");
+const completionModalOverlay = document.querySelector(".completion-modal-overlay");
+const completionModalExitButton = document.querySelector(".completion-modal-exit-button");
+
 const introScreen = document.getElementById('intro-screen');
 const enterButton = document.getElementById('enter-button');
 const gameContainer = document.getElementById('game-container');
+
+let collectedPokeballs = new Set();
 
 enterButton.addEventListener('click', () => {
     introScreen.style.display = 'none';
@@ -65,6 +73,8 @@ function init() {
 
     modalExitButton.addEventListener('click', hideModal);
     pokeballModalExitButton.addEventListener('click', hidePokeballModal);
+
+    completionModalExitButton.addEventListener('click', hideCompletionModal);
 
     const aspect = sizes.width / sizes.height;
     camera = new THREE.OrthographicCamera(
@@ -309,6 +319,16 @@ function hidePokeballModal() {
     pokeballModalOverlay.classList.add("hidden");
 }
 
+function showCompletionModal() {
+    completionModal.classList.remove("hidden");
+    completionModalOverlay.classList.remove("hidden");
+}
+
+function hideCompletionModal() {
+    completionModal.classList.add("hidden");
+    completionModalOverlay.classList.add("hidden");
+}
+
 
 // Raycaster functions
 
@@ -347,8 +367,29 @@ function onClick(event) {
     const pokeballIntersects = raycaster.intersectObjects(pokeballs.flatMap(pb => pb.children), true);
     if (pokeballIntersects.length > 0) {
         const pokeball = pokeballIntersects[0].object.parent;
-        console.log("Pokeball clicked:", pokeball.name);
-        showPokeballModal();
+        
+        // Check if this pokeball was already collected
+        if (!collectedPokeballs.has(pokeball.name)) {
+            collectedPokeballs.add(pokeball.name);
+            
+            // Update counter
+            pokeballCounter.textContent = `${collectedPokeballs.size}/5 🎾`;
+            
+            // Show different modals based on completion
+            if (collectedPokeballs.size === 5) {
+                showCompletionModal();
+            } else {
+                showPokeballModal();
+            }
+            
+            // Optional: Make the pokeball semi-transparent to show it's been collected
+            pokeball.traverse(child => {
+                if (child.isMesh) {
+                    child.material.transparent = true;
+                    child.material.opacity = 0.5;
+                }
+            });
+        }
         return;
     }
 

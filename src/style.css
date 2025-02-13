@@ -86,7 +86,7 @@ canvas {
   fill: #000000;
 }
 
-.modal-bg-overlay {
+.modal-bg-overlay, .pokeball-modal-overlay {
   z-index: 750;
   height: 100%;
   width: 100%;
@@ -97,7 +97,7 @@ canvas {
   overflow: hidden;
 }
 
-.modal {
+.modal, .pokeball-modal {
   z-index: 999;
   position: fixed;  /* Change from absolute to fixed */
   top: 50%;
