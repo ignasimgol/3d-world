@@ -34,7 +34,7 @@ const sizes = {
     height: window.innerHeight
 };
 
-const cameraOffset = new THREE.Vector3(52, 156, 268);
+const cameraOffset = new THREE.Vector3(52, 100, 268);
 
 // Raycaster setup
 const raycaster = new THREE.Raycaster();
