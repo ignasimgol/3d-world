@@ -9,12 +9,29 @@ let keys = {};
 let light, sun;
 let isJumping = false;
 
+// Add mobile controls variables
+const mobileControls = {
+    up: document.querySelector(".mobile-control.up-arrow"),
+    left: document.querySelector(".mobile-control.left-arrow"),
+    right: document.querySelector(".mobile-control.right-arrow"),
+    down: document.querySelector(".mobile-control.down-arrow"),
+};
+
+const pressedButtons = {
+    up: false,
+    left: false,
+    right: false,
+    down: false,
+};
+
 const JUMP_FORCE = 1.0;
 const GRAVITY = 0.05;
 const INITIAL_Y = 15.0;
 
 let courtObject = null;
 let pokeballs = [];
+
+
 
 const themeToggle = document.getElementById('theme-toggle');
 const sunIcon = document.getElementById('sun-icon');
@@ -83,6 +100,43 @@ function init() {
         1,
         1000
     );
+
+    Object.entries(mobileControls).forEach(([direction, element]) => {
+        element.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            pressedButtons[direction] = true;
+        });
+
+        element.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            pressedButtons[direction] = false;
+        });
+
+        element.addEventListener("mousedown", (e) => {
+            e.preventDefault();
+            pressedButtons[direction] = true;
+        });
+
+        element.addEventListener("mouseup", (e) => {
+            e.preventDefault();
+            pressedButtons[direction] = false;
+        });
+
+        element.addEventListener("mouseleave", (e) => {
+            pressedButtons[direction] = false;
+        });
+
+        element.addEventListener("touchcancel", (e) => {
+            pressedButtons[direction] = false;
+        });
+    });
+
+    // Add window blur event to reset pressed buttons
+    window.addEventListener("blur", () => {
+        Object.keys(pressedButtons).forEach((key) => {
+            pressedButtons[key] = false;
+        });
+    });
     
     // Inicializar controles antes de cargar el modelo
     controls = new OrbitControls(camera, renderer.domElement);
@@ -258,23 +312,23 @@ function handleMovement() {
         }
     }
 
-    if (keys['w'] || keys['ArrowUp']) {
+    // Handle both keyboard and mobile controls
+    if (keys['w'] || keys['ArrowUp'] || pressedButtons.up) {
         character.position.z -= speed;
         character.rotation.y = Math.PI / 2;
         updateCameraPosition();
     }
-    if (keys['s'] || keys['ArrowDown']) {
+    if (keys['s'] || keys['ArrowDown'] || pressedButtons.down) {
         character.position.z += speed;
         character.rotation.y = -Math.PI / 2;
         updateCameraPosition();
     }
-
-    if (keys['a'] || keys['ArrowLeft']) {
+    if (keys['a'] || keys['ArrowLeft'] || pressedButtons.left) {
         character.position.x -= speed;
         character.rotation.y = Math.PI;
         updateCameraPosition();
     }
-    if (keys['d'] || keys['ArrowRight']) {
+    if (keys['d'] || keys['ArrowRight'] || pressedButtons.right) {
         character.position.x += speed;
         character.rotation.y = 0;
         updateCameraPosition();
