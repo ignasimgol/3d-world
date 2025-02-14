@@ -134,7 +134,7 @@ canvas {
   margin-bottom: 12px;
 }
 
-.modal-exit-button {
+.modal-exit-button, .pokeball-modal-exit-button {
   background: transparent;
   border: 2px solid #000;
   color: #000;
@@ -143,7 +143,7 @@ canvas {
   font-weight: 600;
 }
 
-.modal-exit-button:hover {
+.modal-exit-button:hover, .pokeball-modal-exit-button:hover {
   background: #000;
   color: #fff;
 }
